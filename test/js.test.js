@@ -53,7 +53,7 @@ test('timeout is passed through; 0, negative, above 60 and non-numbers are -3', 
   const { api, calls } = load((ok) => ok({}));
   await api.sendRequest('https://a.example/x', { timeout: 60 });
   assert.strictEqual(calls[0].args[4], 60);
-  for (const t of [0, -1, 61, '5', NaN]) {
+  for (const t of [0, 0.5, -1, 61, '5', NaN]) {
     const e = await errorOf(api, 'https://a.example/x', { timeout: t });
     assert.strictEqual(e.status, -3, 'timeout ' + t);
   }

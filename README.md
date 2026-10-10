@@ -24,7 +24,7 @@ const response = await cordova.plugins.advancedHttp.sendRequest(url, options); /
 | `method` | `'GET' \| 'POST' \| 'PUT' \| 'DELETE'` | `GET` | Case-insensitive. |
 | `headers` | `Record<string,string>` | `{}` | Names must be valid HTTP tokens, values strings without line breaks. |
 | `data` | `string \| object` | none | An object is sent as JSON, with `Content-Type: application/json` unless you set one. Not sent with GET. |
-| `timeout` | seconds | `10` | Max `60`. Applies to connect and read (Android) / the request (iOS). |
+| `timeout` | seconds | `10` | 1 to 60. One total deadline for the request (Android: shared by all redirect hops). |
 
 `success({ status, headers, data, url })`: `status` is 2xx, `headers` has lower-cased names, `data` is the body as text (cut at 64 KB), `url` is the final URL after redirects.
 
@@ -38,7 +38,7 @@ const response = await cordova.plugins.advancedHttp.sendRequest(url, options); /
 | `-4` | Cleartext HTTP blocked by the platform (see below) |
 | 3xx-5xx | The HTTP status of a non-2xx response; `data` holds its body |
 
-Only `http` and `https` URLs are accepted. Redirects are followed only to the same scheme (https never downgrades to http).
+Only `http` and `https` URLs are accepted. Redirects are followed only within the same origin (scheme, host and port), up to 5 hops. A redirect to a different origin is refused and reported as an error with the 3xx status and `redirect to a different origin refused: <location>`.
 
 ## Cleartext and local network (the app opts in)
 
@@ -60,7 +60,7 @@ and reference it from the `<application>` tag (`android:networkSecurityConfig="@
 
 ## Security: this bypasses CSP and CORS
 
-A native request ignores the protections the WebView would apply. Any script that runs in your app can use this plugin to call any URL. Call only URLs the user entered themselves or that come from your own allow-list, never URLs taken from remote content, and never send secrets (bearer tokens) to a URL the user did not choose.
+A native request ignores the protections the WebView would apply. Any script that runs in your app can use this plugin to call any URL. Call only URLs the user entered themselves or that come from your own allow-list, never URLs taken from remote content, and never send secrets (bearer tokens) to a URL the user did not choose. Because cross-origin redirects are refused, headers such as `Authorization` are never forwarded to another host.
 
 ## Tests
 

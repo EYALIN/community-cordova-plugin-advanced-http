@@ -55,7 +55,14 @@ public class AdvancedHttp extends CordovaPlugin {
             method = args.getString(1);
             headers = args.isNull(2) ? new JSONObject() : args.getJSONObject(2);
             body = args.isNull(3) ? null : args.getString(3);
-            timeoutMs = (int) Math.round(args.getDouble(4) * 1000);
+            double timeoutSec = args.getDouble(4);
+            if (!(timeoutSec > 0 && timeoutSec <= 60)) {
+                throw new JSONException("timeout must be > 0 and <= 60 seconds");
+            }
+            if (!("GET".equals(method) || "POST".equals(method) || "PUT".equals(method) || "DELETE".equals(method))) {
+                throw new JSONException("unsupported method " + method);
+            }
+            timeoutMs = (int) Math.round(timeoutSec * 1000);
             url = new URL(urlString);
             String p = url.getProtocol();
             if (!"http".equals(p) && !"https".equals(p)) {
@@ -67,11 +74,19 @@ public class AdvancedHttp extends CordovaPlugin {
         }
 
         HttpURLConnection conn = null;
+        final long deadline = System.nanoTime() + timeoutMs * 1000000L;
+        final URL origin = url;
         try {
             for (int hop = 0; ; hop++) {
+                // One deadline for the whole request, shared by every hop.
+                long remainingMs = (deadline - System.nanoTime()) / 1000000L;
+                if (remainingMs <= 0) {
+                    fail(cb, -2, "Request timed out", null);
+                    return;
+                }
                 conn = (HttpURLConnection) url.openConnection();
-                conn.setConnectTimeout(timeoutMs);
-                conn.setReadTimeout(timeoutMs);
+                conn.setConnectTimeout((int) remainingMs);
+                conn.setReadTimeout((int) remainingMs);
                 conn.setInstanceFollowRedirects(false);
                 conn.setRequestMethod(method);
                 Iterator<String> names = headers.keys();
@@ -97,8 +112,8 @@ public class AdvancedHttp extends CordovaPlugin {
                     String location = conn.getHeaderField("Location");
                     if (location != null) {
                         URL next = new URL(url, location);
-                        if (!next.getProtocol().equals(url.getProtocol())) {
-                            fail(cb, status, "Redirect to a different scheme was blocked: " + next, null);
+                        if (!sameOrigin(origin, next)) {
+                            fail(cb, status, "redirect to a different origin refused: " + next, null);
                             return;
                         }
                         conn.disconnect();
@@ -148,6 +163,16 @@ public class AdvancedHttp extends CordovaPlugin {
         }
     }
 
+    private static int port(URL u) {
+        return u.getPort() != -1 ? u.getPort() : u.getDefaultPort();
+    }
+
+    private static boolean sameOrigin(URL a, URL b) {
+        return a.getProtocol().equalsIgnoreCase(b.getProtocol())
+                && a.getHost().equalsIgnoreCase(b.getHost())
+                && port(a) == port(b);
+    }
+
     private static String cleartextMessage(IOException e, URL url) {
         return "Cleartext HTTP traffic to " + url.getHost() + " is not permitted. Allow it in the app's "
                 + "network_security_config (cleartextTrafficPermitted for this domain) or use https. (" + e.getMessage() + ")";
@@ -161,7 +186,23 @@ public class AdvancedHttp extends CordovaPlugin {
             while (out.size() < MAX_BODY && (n = in.read(buf, 0, Math.min(buf.length, MAX_BODY - out.size()))) > 0) {
                 out.write(buf, 0, n);
             }
-            return out.toString("UTF-8");
+            byte[] bytes = out.toByteArray();
+            int len = bytes.length;
+            if (len == MAX_BODY) {
+                // The cap may cut a multi-byte character: drop the incomplete tail.
+                int i = len - 1;
+                int back = 0;
+                while (i > 0 && back < 3 && (bytes[i] & 0xC0) == 0x80) {
+                    i--;
+                    back++;
+                }
+                int lead = bytes[i] & 0xFF;
+                int need = lead >= 0xF0 ? 4 : lead >= 0xE0 ? 3 : lead >= 0xC0 ? 2 : 1;
+                if (need > back + 1) {
+                    len = i;
+                }
+            }
+            return new String(bytes, 0, len, StandardCharsets.UTF_8);
         } finally {
             in.close();
         }

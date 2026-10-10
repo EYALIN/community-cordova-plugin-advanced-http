@@ -63,7 +63,7 @@ function prepare(url, options) {
   }
 
   var timeout = options.timeout == null ? DEFAULT_TIMEOUT : options.timeout;
-  if (typeof timeout !== 'number' || !isFinite(timeout) || timeout <= 0 || timeout > MAX_TIMEOUT) {
+  if (typeof timeout !== 'number' || !isFinite(timeout) || timeout < 1 || timeout > MAX_TIMEOUT) {
     return { error: 'timeout must be a number of seconds between 1 and ' + MAX_TIMEOUT };
   }
 
