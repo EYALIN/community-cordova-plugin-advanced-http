@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<plugin xmlns="http://apache.org/cordova/ns/plugins/1.0"
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        id="community-cordova-plugin-advanced-http"
+        version="1.0.0">
+
+    <name>community-cordova-plugin-advanced-http</name>
+    <description>Minimal native HTTP client: one request to a user-defined http(s) URL, bypassing WebView CSP and CORS.</description>
+    <license>MIT</license>
+    <keywords>cordova,http,request,webhook,cors,csp,native</keywords>
+    <repo>https://github.com/EYALIN/community-cordova-plugin-advanced-http.git</repo>
+    <issue>https://github.com/EYALIN/community-cordova-plugin-advanced-http/issues</issue>
+
+    <engines>
+        <engine name="cordova" version=">=10.0.0"/>
+        <engine name="cordova-android" version=">=11.0.0"/>
+        <engine name="cordova-ios" version=">=6.0.0"/>
+    </engines>
+
+    <js-module src="www/advancedHttp.js" name="advancedHttp">
+        <clobbers target="cordova.plugins.advancedHttp" />
+    </js-module>
+
+    <!-- No <access>, ATS or cleartext config here: the app opts in (see README). -->
+    <platform name="android">
+        <config-file target="res/xml/config.xml" parent="/*">
+            <feature name="AdvancedHttp">
+                <param name="android-package" value="com.community.cordova.advancedhttp.AdvancedHttp" />
+            </feature>
+        </config-file>
+        <config-file target="AndroidManifest.xml" parent="/manifest">
+            <uses-permission android:name="android.permission.INTERNET" />
+        </config-file>
+
+        <source-file src="src/android/AdvancedHttp.java" target-dir="src/com/community/cordova/advancedhttp" />
+    </platform>
+
+    <platform name="ios">
+        <config-file target="config.xml" parent="/*">
+            <feature name="AdvancedHttp">
+                <param name="ios-package" value="AdvancedHttp" />
+            </feature>
+        </config-file>
+
+        <header-file src="src/ios/AdvancedHttp.h" />
+        <source-file src="src/ios/AdvancedHttp.m" />
+    </platform>
+</plugin>

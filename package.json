@@ -1,0 +1,54 @@
+{
+  "name": "community-cordova-plugin-advanced-http",
+  "version": "1.0.0",
+  "description": "Minimal native HTTP client for Cordova: send one request (GET/POST/PUT/DELETE) to a user-defined http(s) URL, bypassing WebView CSP and CORS.",
+  "types": "./types/index.d.ts",
+  "files": [
+    "plugin.xml",
+    "www/",
+    "src/",
+    "types/",
+    "README.md",
+    "RELEASENOTES.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "test": "node --test \"test/*.test.js\""
+  },
+  "cordova": {
+    "id": "community-cordova-plugin-advanced-http",
+    "platforms": [
+      "android",
+      "ios"
+    ]
+  },
+  "readme": "README.md",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/EYALIN/community-cordova-plugin-advanced-http.git"
+  },
+  "homepage": "https://github.com/EYALIN/community-cordova-plugin-advanced-http#readme",
+  "funding": "https://github.com/sponsors/EYALIN",
+  "bugs": "https://github.com/EYALIN/community-cordova-plugin-advanced-http/issues",
+  "keywords": [
+    "ecosystem:cordova",
+    "cordova-android",
+    "cordova-ios",
+    "http",
+    "request",
+    "webhook",
+    "cors",
+    "csp"
+  ],
+  "author": "EYALIN",
+  "license": "MIT",
+  "engines": {
+    "cordovaDependencies": {
+      "1.0.0": {
+        "cordova": ">=10.0.0",
+        "cordova-android": ">=11.0.0",
+        "cordova-ios": ">=6.0.0"
+      }
+    }
+  }
+}
